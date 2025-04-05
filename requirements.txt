@@ -1,0 +1,22 @@
+# Core DepthAI and OAK-D Lite support
+depthai==2.24.0           # Official SDK for OAK-D Lite (adjust to latest if needed)
+opencv-python             # OpenCV for image processing and visualization
+numpy                     # Core numerical computations
+
+# For camera calibration and transformations
+scipy                     # For camera calibration and geometric math
+pyyaml                   # For config files
+
+# Optional but useful for visualization
+matplotlib                # To plot trajectories or visualize debug info
+open3d                    # 3D point cloud visualization (optional)
+
+# Feature detection and visual odometry
+scikit-image              # For feature extraction (e.g., ORB, Harris)
+opencv-contrib-python     # For advanced OpenCV modules like SIFT, SURF, etc.
+
+# Optional SLAM/VO frameworks
+pynndescent               # For fast nearest neighbor search (used in VO)
+
+# SLAM/VO research tools
+evo                      # Evaluation toolkit for odometry (ATE, RPE)
