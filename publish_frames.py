@@ -1,15 +1,16 @@
 import depthai as dai
 import cv2
 import paho.mqtt.client as mqtt
-import numpy as np
 import time
+import base64
+import json
 
 # MQTT Setup
 MQTT_BROKER = "localhost"  # or the IP of the MQTT broker
 MQTT_PORT = 1883
 MQTT_TOPIC_LEFT = "oakd/stereo/left"
 MQTT_TOPIC_RIGHT = "oakd/stereo/right"
-FREQUENCY = 20
+FREQUENCY = 30
 FRAME_PERIOD = 1.0 / FREQUENCY  # 0.05 seconds
 
 
@@ -59,16 +60,28 @@ with dai.Device(pipeline) as device:
         if elapsed >= FRAME_PERIOD:
             in_left = q_left.tryGet()
             in_right = q_right.tryGet()
-
+            
             if in_left is not None and in_right is not None:
                 img_left = in_left.getCvFrame()
                 img_right = in_right.getCvFrame()
 
+                timestamp = time.time()  # Epoch time
+
                 _, buffer_left = cv2.imencode('.jpg', img_left)
                 _, buffer_right = cv2.imencode('.jpg', img_right)
 
-                client.publish(MQTT_TOPIC_LEFT, buffer_left.tobytes())
-                client.publish(MQTT_TOPIC_RIGHT, buffer_right.tobytes())
+                msg_left = {
+                    "timestamp": timestamp,
+                    "image": base64.b64encode(buffer_left).decode('utf-8')
+                }
+                msg_right = {
+                    "timestamp": timestamp,
+                    "image": base64.b64encode(buffer_right).decode('utf-8')
+                }
+
+                client.publish(MQTT_TOPIC_LEFT, json.dumps(msg_left))
+                client.publish(MQTT_TOPIC_RIGHT, json.dumps(msg_right))
+
 
                 last_time = current_time
         else:

@@ -8,7 +8,7 @@ TOPIC_LEFT_IMG = "oakd/stereo/left"
 TOPIC_RIGHT_IMG = "oakd/stereo/right"
 TOPIC_MATCHES = "oakd/stereo/features/matches"
 
-image_buffer = {'left': None, 'right': None}
+image_buffer = {'left': None, 'right': None, 'timestamp': None}
 
 orb = cv2.ORB_create(nfeatures=1000)
 matcher = cv2.BFMatcher(cv2.NORM_HAMMING, crossCheck=True)
@@ -18,8 +18,11 @@ EPIPOLAR_THRESHOLD = 2  # pixels
 MIN_DISPARITY = 2       # pixels
 
 def decode_image(payload):
-    np_arr = np.frombuffer(payload, np.uint8)
-    return cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE)
+    img_payload = json.loads(payload.decode('utf-8'))
+    img_data = base64.b64decode(img_payload['image'])
+    np_arr = np.frombuffer(img_data, np.uint8)
+    timestamp = img_payload['timestamp']
+    return cv2.imdecode(np_arr, cv2.IMREAD_GRAYSCALE), timestamp
 
 def serialize_matches(kp_left, kp_right, matches):
     # Format: list of dicts with left/right point pairs
@@ -60,9 +63,9 @@ def match_and_publish(img_left, img_right):
 
 def on_message(client, userdata, msg):
     if msg.topic == TOPIC_LEFT_IMG:
-        image_buffer['left'] = decode_image(msg.payload)
+        image_buffer['left'], timestamp_l = decode_image(msg.payload)
     elif msg.topic == TOPIC_RIGHT_IMG:
-        image_buffer['right'] = decode_image(msg.payload)
+        image_buffer['right'], timestamp_r = decode_image(msg.payload)
 
     if image_buffer['left'] is not None and image_buffer['right'] is not None:
         match_and_publish(image_buffer['left'], image_buffer['right'])
