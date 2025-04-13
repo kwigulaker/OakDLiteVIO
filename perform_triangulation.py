@@ -10,8 +10,6 @@ TOPIC_MATCHES = "oakd/stereo/features/matches"
 
 image_buffer = {'left': None, 'right': None, 'timestamp': None}
 matches_buffer = None
-previous_state = [0,0,0,0,0,0]
-current_state = previous_state.copy()
 l_intrinsics = None
 l_distcoeffs = None
 r_distcoeffs = None
@@ -72,7 +70,13 @@ def perform_triangulation(matches):
 
     points_hom = cv2.triangulatePoints(P1, P2, points_l_h, points_r_h)
     points_3d = (points_hom[:3, :] / points_hom[3, :]).T
-    pnp = cv2.solvePnP(points_3d, points_left, l_intrinsics, dist_coeffs)
+    pnp = cv2.solvePnP(points_3d, points_left, l_intrinsics, l_distcoeffs)
+    # Write the PnP result to poses.txt
+    if pnp[0]:  # Check if solvePnP was successful
+        rvec, tvec = pnp[1], pnp[2]
+        with open("poses.txt", "a") as f:
+            f.write(f"Rotation Vector: {rvec.flatten().tolist()}\n")
+            f.write(f"Translation Vector: {tvec.flatten().tolist()}\n")
 
     
 
